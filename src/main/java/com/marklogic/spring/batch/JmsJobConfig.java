@@ -9,16 +9,14 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.item.*;
 import org.springframework.batch.item.jms.JmsItemReader;
 import org.springframework.batch.item.support.PassThroughItemProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 import org.springframework.jms.core.JmsTemplate;
 
+import javax.jms.TextMessage;
 import java.util.List;
 
 @EnableBatchProcessing
-@Import(MessagingConfig.class)
 public class JmsJobConfig {
 
     //Rename this private variable
@@ -42,11 +40,16 @@ public class JmsJobConfig {
             StepBuilderFactory stepBuilderFactory,
             JmsTemplate jmsTemplate) {
 
-        JmsItemReader<String> reader = new JmsItemReader<String>();
+        JmsItemReader<TextMessage> reader = new JmsItemReader<TextMessage>();
         reader.setJmsTemplate(jmsTemplate);
-        reader.setItemType(String.class);
+        reader.setItemType(TextMessage.class);
 
-        ItemProcessor<String, String> processor = new PassThroughItemProcessor<String>();
+        ItemProcessor<TextMessage, String> processor = new ItemProcessor<TextMessage, String>() {
+            @Override
+            public String process(TextMessage item) throws Exception {
+                return item.getText();
+            }
+        };
 
         ItemWriter<String> writer = new ItemWriter<String>() {
 
@@ -58,7 +61,7 @@ public class JmsJobConfig {
             }
         };
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(10)
+                .<TextMessage, String>chunk(10)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

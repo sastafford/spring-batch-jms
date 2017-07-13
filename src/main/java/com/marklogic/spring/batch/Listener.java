@@ -1,17 +1,16 @@
 package com.marklogic.spring.batch;
 
+import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
-
+/*
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
-
-import org.springframework.jms.annotation.JmsListener;
-
+*/
 @Component
 public class Listener {
 
-
+/*
    @JmsListener(destination = "inbound.queue")
     public void receiveMessage(final Message jsonMessage) throws JMSException {
         String messageData = null;
@@ -22,5 +21,5 @@ public class Listener {
             System.out.println(messageData.toString());
         }
     }
-
+*/
 }
