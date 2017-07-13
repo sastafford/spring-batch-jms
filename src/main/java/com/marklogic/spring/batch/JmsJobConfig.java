@@ -8,7 +8,6 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.*;
 import org.springframework.batch.item.jms.JmsItemReader;
-import org.springframework.batch.item.support.PassThroughItemProcessor;
 import org.springframework.context.annotation.Bean;
 
 import org.springframework.jms.core.JmsTemplate;

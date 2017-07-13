@@ -15,8 +15,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import java.security.SecureClassLoader;
-import java.util.Stack;
+import java.util.LinkedList;
 import java.util.UUID;
 
 @Configuration
@@ -31,8 +30,6 @@ public class MockMessagingConfig {
     @Mock
     private TextMessage mockTextMessage;
 
-    private Stack<Message> messages = new Stack<Message>();
-
     public MockMessagingConfig() throws JMSException {
         MockitoAnnotations.initMocks(this);
         when(mockSession.createTextMessage()).thenReturn(mockTextMessage);
@@ -44,19 +41,25 @@ public class MockMessagingConfig {
                         return UUID.randomUUID().toString();
                     }
                 });
-        //need to push null onto the stack to let ItemReader know it's empty
-        messages.push(null);
+    }
+
+    @Bean
+    public LinkedList<Message> messages() throws JMSException {
+        LinkedList<Message> messages = new LinkedList<Message>();
         for (int i = 0; i < 5; i++) {
             TextMessage msg = mockSession.createTextMessage();
             messages.push(msg);
         }
-
-
-
+        return messages;
     }
 
     @Bean
-    public JmsTemplate jmsTemplate() throws JMSException {
+    public JmsTemplate jmsTemplate(LinkedList<Message> messages) throws JMSException {
+        //Make sure last message is null so that JmsItemReader knows where to stop
+        if (messages.peekLast() != null) {
+            messages.addLast(null);
+        };
+
         when(mockJmsTemplate.getMessageConverter()).thenReturn(new SimpleMessageConverter());
         when(mockJmsTemplate.receiveSelected(anyString())).thenAnswer(new Answer<Message>() {
             @Override
