@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 
 import org.springframework.jms.core.JmsTemplate;
 
+import javax.jms.Message;
 import javax.jms.TextMessage;
 import java.util.List;
 
@@ -39,14 +40,22 @@ public class JmsJobConfig {
             StepBuilderFactory stepBuilderFactory,
             JmsTemplate jmsTemplate) {
 
-        JmsItemReader<TextMessage> reader = new JmsItemReader<TextMessage>();
+        JmsItemReader<Message> reader = new JmsItemReader<Message>();
         reader.setJmsTemplate(jmsTemplate);
-        reader.setItemType(TextMessage.class);
+        reader.setItemType(Message.class);
 
-        ItemProcessor<TextMessage, String> processor = new ItemProcessor<TextMessage, String>() {
+        ItemProcessor<Message, String> processor = new ItemProcessor<Message, String>() {
             @Override
-            public String process(TextMessage item) throws Exception {
-                return item.getText();
+            public String process(Message item) throws Exception {
+                String text = null;
+                if (item instanceof TextMessage) {
+                    TextMessage textMessage = (TextMessage) item;
+                    text = textMessage.getText();
+                    System.out.println("Received: " + text);
+                } else {
+                    System.out.println("Received: " + item);
+                }
+                return text;
             }
         };
 
@@ -60,10 +69,11 @@ public class JmsJobConfig {
             }
         };
         return stepBuilderFactory.get("step1")
-                .<TextMessage, String>chunk(10)
+                .<Message, String>chunk(10)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .readerIsTransactionalQueue()
                 .build();
     }
 }
