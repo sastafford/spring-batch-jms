@@ -6,6 +6,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
+import org.springframework.jms.connection.CachingConnectionFactory;
+import org.springframework.jms.connection.SingleConnectionFactory;
 import org.springframework.jms.core.JmsTemplate;
 
 import javax.jms.ConnectionFactory;
@@ -25,7 +27,12 @@ public class MessagingConfig {
         connectionFactory.setBrokerURL(BROKER_URL);
         connectionFactory.setPassword(BROKER_USERNAME);
         connectionFactory.setUserName(BROKER_PASSWORD);
-        return connectionFactory;
+
+        SingleConnectionFactory connFactory = new SingleConnectionFactory(connectionFactory);
+        connFactory.setReconnectOnException(true);
+
+        CachingConnectionFactory cacheConnectionFactory = new CachingConnectionFactory(connFactory);
+        return cacheConnectionFactory;
     }
 
     @Bean
@@ -33,6 +40,7 @@ public class MessagingConfig {
         JmsTemplate template = new JmsTemplate(connectionFactory);
         template.setDefaultDestinationName("home");
         template.setReceiveTimeout(5000);
+        template.setSessionTransacted(true);
         return template;
     }
 
@@ -41,6 +49,7 @@ public class MessagingConfig {
         DefaultJmsListenerContainerFactory factory
                 = new DefaultJmsListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory());
+        factory.setSessionTransacted(true);
         return factory;
     }
 }

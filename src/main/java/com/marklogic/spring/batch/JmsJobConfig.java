@@ -11,8 +11,11 @@ import org.springframework.batch.item.jms.JmsItemReader;
 import org.springframework.context.annotation.Bean;
 
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.SessionCallback;
 
+import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.Session;
 import javax.jms.TextMessage;
 import java.util.List;
 
@@ -51,9 +54,9 @@ public class JmsJobConfig {
                 if (item instanceof TextMessage) {
                     TextMessage textMessage = (TextMessage) item;
                     text = textMessage.getText();
-                    System.out.println("Received: " + text);
+                    //System.out.println("Received: " + text);
                 } else {
-                    System.out.println("Received: " + item);
+                    //System.out.println("Received: " + item);
                 }
                 return text;
             }
@@ -63,9 +66,18 @@ public class JmsJobConfig {
 
             @Override
             public void write(List<? extends String> items) throws Exception {
-                for (String item: items) {
-                    System.out.println("SPRING BATCH: " + item);
+                for (int i = 0; i < items.size(); i++) {
+                    System.out.println("SPRING BATCH: " + i + " " + items.get(i));
                 }
+                jmsTemplate.execute(new SessionCallback<String>() {
+
+                    @Override
+                    public String doInJms(Session session) throws JMSException {
+                        //session.rollback();
+                        session.commit();
+                        return null;
+                    }
+                });
             }
         };
         return stepBuilderFactory.get("step1")
